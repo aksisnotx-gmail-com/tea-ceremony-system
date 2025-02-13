@@ -235,125 +235,131 @@ export default {
 			});
 		},
         // 正常下单，生成订单，减少余额，添加积分，减少库存，修改状态已支付
-         payClick() {
-			let that = this
-            if (this.radio == -1) {
-				this.$message({
-					message: '请选择收货地址',
-					type: 'error',
-					duration: 1500
-				});
-				return;
-            }
-            // 生成订单
-            for(let index in this.tableData){
-				let item = this.tableData[index]
-				setTimeout(()=>{
+      payClick() {
+        let that = this
+        if (this.radio == -1) {
+          this.$message({
+            message: '请选择收货地址',
+            type: 'error',
+            duration: 1500
+          });
+          return;
+        }
+        const aliOrder = {
+          subject: '茶道系统订单',
+          traceNo: this.createOrder(),
+          totalAmount: this.totalPrice,
+        }
+        // 生成订单
+        for(let index in this.tableData){
+          let item = this.tableData[index]
+          setTimeout(()=>{
 					
-                // 获取商品详情信息
-                 this.$http.get(`${item.tablename}/info/${item.goodid}`).then( res => {
-                    // 订单编号
-                    this.orderIdList['orderId' + Number(index)] = String(this.createOrder())
-                    let data = res.data.data;
-                    data.alllimittimes = data.alllimittimes - item.buynumber;
-                    // 更新库存信息
-                     this.$http.post(`${item.tablename}/update`, data).then( res => {
-                        // 添加订单信息
-                        let order = {
-                            orderid: this.orderIdList['orderId' + Number(index)],
-                            tablename: item.tablename,
-                            userid: this.user.id,
-                            goodid: item.goodid,
-                            goodname: item.goodname,
-                            picture: item.picture,
-                            buynumber: item.buynumber,
-                            discountprice: item.price,
-                            price: item.price,
-                            total: Number(item.total),
-                            discounttotal: Number(item.total),
-                            type: this.type?Number(this.type):1,
-                            //total: this.totalPrice,
-                            address: this.addressList[this.radio].address,
-                            tel: this.addressList[this.radio].phone,
-                            consignee: this.addressList[this.radio].name,
-                            remark: this.remark,
-                            status: '未支付',
-							sfsh: '',
-							role: this.userTableName,
-                        }
-						this.$http.post('orders/add', order).then( res => {
-                            // 减少余额，更新订单状态
-                            // 判断余额是否充足
-                            if (Number(this.user.money) < Number(item.total)) {
-                                this.$message({
-                                    message: '余额不足，请先充值',
-                                    type: 'error',
-                                    duration: 1500,
-								onClose(){
-									that.$router.push('/index/center')
-								}
-                                });
-                                return
-                            }
-                            // 如果该商品存在积分
-                            if (data.jf) {
-                                this.user.jf = Number((Number(this.user.jf) + Number(item.total)).toFixed(2))
-                            }
-                            this.user.money = Number((Number(this.user.money) - Number(item.total)).toFixed(2))
-                            // 更新用户余额
-                            this.$http.post(`${this.userTableName}/update`, this.user).then(res => {
-								localStorage.setItem('sessionForm',JSON.stringify(this.user))
-                                order.status = '已支付'
-                                var params = {
-                                    orderid: this.orderIdList['orderId' + Number(index)],
-                                    page: 1,
-                                    limit: 1,
-                                }
-                                this.$http.get('orders/list', {params: params}).then(res => {
-                                    order.id = res.data.data.list[0].id;
-                                    this.$http.post(`orders/update`, order).then(res => {
-                                        // 删除购物车数据(如果是购物车下单)
-                                        if (item.id) {
-                                            this.$http.post('cart/delete', [item.id]).then(res => {});
-                                        }
-                                        this.$message({
-											message: '购买成功',
-											type: 'success',
-											duration: 1500,
-											onClose: () => {
-                                                this.$router.push('/index/shop-order/order');
-											}
-                                        });
-                                    });
-                                });
-                            });
-                        });
+            // 获取商品详情信息
+            this.$http.get(`${item.tablename}/info/${item.goodid}`).then( res => {
+              // 订单编号
+              this.orderIdList['orderId' + Number(index)] = String(this.createOrder())
+              let data = res.data.data;
+              data.alllimittimes = data.alllimittimes - item.buynumber;
+              // 更新库存信息
+              this.$http.post(`${item.tablename}/update`, data).then( res => {
+                // 添加订单信息
+                let order = {
+                  orderid: this.orderIdList['orderId' + Number(index)],
+                  tablename: item.tablename,
+                  userid: this.user.id,
+                  goodid: item.goodid,
+                  goodname: item.goodname,
+                  picture: item.picture,
+                  buynumber: item.buynumber,
+                  discountprice: item.price,
+                  price: item.price,
+                  total: Number(item.total),
+                  discounttotal: Number(item.total),
+                  type: this.type?Number(this.type):1,
+                  //total: this.totalPrice,
+                  address: this.addressList[this.radio].address,
+                  tel: this.addressList[this.radio].phone,
+                  consignee: this.addressList[this.radio].name,
+                  remark: this.remark,
+                  status: '未支付',
+                  sfsh: '',
+                  role: this.userTableName,
+                }
+                this.$http.post('orders/add', order).then( res => {
+                  // 减少余额，更新订单状态
+                  // 判断余额是否充足
+                  if (Number(this.user.money) < Number(item.total)) {
+                    this.$message({
+                      message: '余额不足，请先充值',
+                      type: 'error',
+                      duration: 1500,
+                      onClose(){
+                        that.$router.push('/index/center')
+                      }
                     });
+                    return
+                  }
+                  // 如果该商品存在积分
+                  if (data.jf) {
+                    this.user.jf = Number((Number(this.user.jf) + Number(item.total)).toFixed(2))
+                  }
+                  this.user.money = Number((Number(this.user.money) - Number(item.total)).toFixed(2))
+                  // 更新用户余额
+                  this.$http.post(`${this.userTableName}/update`, this.user).then(res => {
+                    localStorage.setItem('sessionForm',JSON.stringify(this.user))
+                    order.status = '已支付'
+                    var params = {
+                      orderid: this.orderIdList['orderId' + Number(index)],
+                      page: 1,
+                      limit: 1,
+                    }
+                    this.$http.get('orders/list', {params: params}).then(res => {
+                      order.id = res.data.data.list[0].id;
+                      this.$http.post(`orders/update`, order).then(res => {
+                        // 删除购物车数据(如果是购物车下单)
+                        if (item.id) {
+                          this.$http.post('cart/delete', [item.id]).then(res => {});
+                        }
+                        this.$message({
+                          message: '购买成功',
+                          type: 'success',
+                          duration: 1500,
+                          onClose: () => {
+                            this.$router.push('/index/shop-order/order');
+                          }
+                        });
+                      });
+                    });
+                  });
                 });
-				},500)
-            }
-        },
-		createOrder() {
-			let order = '';
-			let now = new Date();
-			order += now.getFullYear();
-			order += now.getMonth() + 1;
-			order += now.getDate();
-			order += now.getHours();
-			order += now.getMinutes();
-			order += now.getSeconds();
-			order += now.getMilliseconds();
+              });
+            });
+          },500)
+        }
+        window.open(`http://localhost:8080/springbootav3a6ik0/alipay/pay?subject=${aliOrder.subject}&traceNo=${aliOrder.traceNo}&totalAmount=${aliOrder.totalAmount}`)
+      },
+      createOrder() {
+        let order = '';
+        let now = new Date();
+        order += now.getFullYear();
+        order += now.getMonth() + 1;
+        order += now.getDate();
+        order += now.getHours();
+        order += now.getMinutes();
+        order += now.getSeconds();
+        order += now.getMilliseconds();
 
-			return order;
-		}
+        return order;
+      }
     },
-    computed: {
-		totalPrice() {
-			let totalPrice = 0;
-			this.tableData.forEach(item => {
-				totalPrice += item.price * item.buynumber;
-			});
-			return totalPrice.toFixed(2);
+  computed: {
+    totalPrice() {
+      let totalPrice = 0;
+      this.tableData.forEach(item => {
+        totalPrice += item.price * item.buynumber;
+      });
+      return totalPrice.toFixed(2);
 		},
 		totalJifen() {
 			let totalJifen = 0;
