@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>支付宝支付</title>
+</head>
+<body>
+<h1>支付宝支付</h1>
+<div>
+    <!-- 支付按钮 -->
+    <button id="payButton" >立即支付</button>
+</div>
+
+
+<script type="text/javascript">
+    // 绑定按钮点击事件
+    document.getElementById('payButton').onclick = () => {
+        const order = {
+            subject: "测试商品",
+            traceNo: '1',
+            totalAmount:100000
+        }
+        window.open(`http://localhost:8080/springbootav3a6ik0/alipay/pay?subject=${order.subject}&traceNo=${order.traceNo}&totalAmount=${order.totalAmount}`)
+    }
+</script>
+</body>
+</html>
