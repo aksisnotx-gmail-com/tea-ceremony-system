@@ -150,9 +150,11 @@ public class OrdersController {
     @RequestMapping("/add")
     public R add(@RequestBody OrdersEntity orders, HttpServletRequest request){
     	//ValidatorUtils.validateEntity(orders);
+        //TODO 支付宝沙盒
         ordersService.insert(orders);
         return R.ok();
     }
+
 
 
 
